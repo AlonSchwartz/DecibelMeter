@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
         switch(v.getId()) {
             case R.id.btn_measure:
-                Intent in = new Intent(this, Measurment.class);
+                Intent in = new Intent(this, DecibelMeasurment.class);
                 startActivity(in);
                 break;
 

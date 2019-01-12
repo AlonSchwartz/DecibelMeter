@@ -1,66 +1,31 @@
 package com.elchananalon.decibelmeter;
 
-import android.content.Intent;
-import android.media.MediaPlayer;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
+import android.media.MediaRecorder;
 
-import java.io.IOException;
+import java.io.Serializable;
 
-public class Measurment extends AppCompatActivity implements View.OnClickListener{
-
-    private Button buttonStart;
-    private Button buttonStop;
-    private Button buttonPlayLastRecordAudio;
-    //creating a mediaplayer object
-    private MediaPlayer player;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_measurment);
-        //getting buttons from xml
-        buttonStart = (Button) findViewById(R.id.buttonStart);
-        buttonStop = (Button) findViewById(R.id.buttonStop);
-        buttonPlayLastRecordAudio = (Button)findViewById(R.id.buttonPlay);
-
-        //attaching onclicklistener to buttons
-        buttonStart.setOnClickListener(this);
-        buttonStop.setOnClickListener(this);
-        /*buttonPlayLastRecordAudio.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) throws IllegalArgumentException,
-                    SecurityException, IllegalStateException {
-
-                player = new MediaPlayer();
-                try {
-                    player.setDataSource(AudioSavePathInDevice);
-                    player.prepare();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                player.start();
-                Toast.makeText(Measurment.this, "Recording Playing",
-                        Toast.LENGTH_LONG).show();
-            }
-        });*/
+public class Measurment implements Serializable {
+    private MediaRecorder mRecorder;
+    private static double mEMA = 0.0;
+    static final private double EMA_FILTER = 0.6;
+    public Measurment(MediaRecorder mr){
+        this.mRecorder = mr;
     }
-    public void onClick(View view)
-    {
-        if (view == buttonStart)
-        {
-            //starting service
-            startService(new Intent(this, MeasurmentService.class));
-        }
-
-        if (view == buttonStop)
-        {
-            //stopping service - call onDestroy
-            stopService(new Intent(this, MeasurmentService.class));
-        }
+    public double soundDb(double ampl){
+        return  20 * Math.log10(getAmplitudeEMA() / ampl);
     }
+    public double getAmplitude() {
+        if (mRecorder != null)
+            return  (mRecorder.getMaxAmplitude());
+        else
+            return 0;
+
+    }
+    public double getAmplitudeEMA() {
+        double amp =  getAmplitude();
+        mEMA = EMA_FILTER * amp + (1.0 - EMA_FILTER) * mEMA;
+        return mEMA;
+    }
+
+
 }

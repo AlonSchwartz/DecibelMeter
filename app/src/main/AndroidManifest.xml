@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.elchananalon.decibelmeter">
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.STORAGE" />
     <application
         android:allowBackup="true"
@@ -18,13 +18,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Measurment" />
+        <activity android:name=".DecibelMeasurment" />
         <activity android:name=".LastMeasurments" />
         <activity android:name=".LoudestMeasurements"></activity>
         <service
             android:name=".MeasurmentService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true"
+            >
+            <intent-filter>
+                <action android:name="com.elchananalon.decibelmeter.MeasurmentService"/>
+            </intent-filter></service>
     </application>
 
 </manifest>
