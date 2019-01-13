@@ -1,6 +1,7 @@
 package com.elchananalon.decibelmeter;
 
 import android.media.MediaRecorder;
+import android.util.Log;
 
 import java.io.Serializable;
 

@@ -13,6 +13,8 @@ import android.util.Log;
 public class MeasurmentService extends Service {
     private Measurment meas;
     private MediaRecorder mRecorder;
+    private static double mEMA = 0.0;
+    static final private double EMA_FILTER = 0.6;
     private boolean isRunning;
 
 
@@ -29,7 +31,7 @@ public class MeasurmentService extends Service {
                 {
                     Log.d("debug","i="+i);
                     i++;
-                    SystemClock.sleep(1000);
+                    SystemClock.sleep(5000);
                 }
             }
         }).start();
@@ -45,18 +47,13 @@ public class MeasurmentService extends Service {
     public void onDestroy()
     {
         super.onDestroy();
-        Log.d("debug",""+mRecorder.getMaxAmplitude());
-        meas = new Measurment(mRecorder);
-        //stopping the recorder when service is destroyed
-        stopRecorder();
-
-        // Send measurement object to activity via broadcast
-        Intent intent = new Intent("custom-event-name");
-        intent.putExtra("measurement_results",meas);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        Log.d("debug","MyService onDestroy()");
-        Log.d("debug","res= "+meas.getAmplitude());
+        if(mRecorder != null){
+            //stopping the recorder when service is destroyed
+            stopRecorder();
+            Log.d("debug","MyService onDestroy()");
+        }
         isRunning = false;
+
     }
 
     @Override
@@ -73,6 +70,9 @@ public class MeasurmentService extends Service {
             mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
             mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             mRecorder.setOutputFile("/dev/null");
+            mRecorder.setAudioChannels(1);
+            mRecorder.setAudioSamplingRate(44100);
+            mRecorder.setAudioEncodingBitRate(192000);
             try
             {
                 mRecorder.prepare();
@@ -95,11 +95,39 @@ public class MeasurmentService extends Service {
     }
     public void stopRecorder() {
         if (mRecorder != null) {
-            Log.d("debug","recording stopped");
+
             mRecorder.stop();
+
+            // meas = new Measurment(mRecorder);
+            // Send measurement object to activity via broadcast
+            double toSend[] ={getAmplitude(),getAmplitudeEMA(),soundDb(getAmplitude())};
+            Intent intent = new Intent("custom-event-name");
+            intent.putExtra("measurement_results",toSend);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+
+
             mRecorder.reset();
-           // mRecorder.release();// if removed no segmentation fault but crashes after second play
+            mRecorder.release();// if removed no segmentation fault but crashes after second play
             mRecorder = null;
+            Log.d("debug","recording stopped");
         }
+    }
+    public double soundDb(double ampl){
+        if(ampl == 0){
+            return 0;
+        }
+        return  20 * Math.log10(getAmplitudeEMA() / ampl);
+    }
+    public double getAmplitude() {
+        if (mRecorder != null)
+            return  (mRecorder.getMaxAmplitude());
+        else
+            return 0;
+
+    }
+    public double getAmplitudeEMA() {
+        double amp =  getAmplitude();
+        mEMA = EMA_FILTER * amp + (1.0 - EMA_FILTER) * mEMA;
+        return mEMA;
     }
 }

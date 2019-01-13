@@ -62,9 +62,11 @@ public class DecibelMeasurment extends AppCompatActivity implements View.OnClick
         @Override
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
-            meas = (Measurment)intent.getSerializableExtra("measurement_results");
-            Log.d("receiver", "Got message: " +meas.getAmplitude());
-            results.setText(""+meas.getAmplitude());
+            //meas = (Measurment)intent.getSerializableExtra("measurement_results");
+            double resu[] = intent.getDoubleArrayExtra("measurement_results");
+            Log.d("receiver", "Got message: " +resu[0]+"  "+resu[1]+"  "+resu[2]);
+            //results.setText(""+meas.getAmplitude());
+            results.setText("Amplitude = "+resu[0]+" , AmplitudeEMA= "+resu[1]+", DB = " + resu[2]);
         }
     };
     @Override
