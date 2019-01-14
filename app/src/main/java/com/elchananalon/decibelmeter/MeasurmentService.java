@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
@@ -21,30 +22,37 @@ public class MeasurmentService extends Service {
     private static double mEMA = 0.0;
     static final private double EMA_FILTER = 0.6;
     private boolean isRunning;
+    private Handler mHandler = new Handler();
 
-
+    private Runnable mPollTask = new Runnable() {
+        @Override
+        public void run() {
+            getAmplitude();
+            mHandler.postDelayed(mPollTask,300);
+        }
+    };
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         startRecorder();
-        mRecorder.getMaxAmplitude();
+        //mRecorder.getMaxAmplitude();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run()
-            {
-                isRunning = true;
-                //while(isRunning)
-                //{
-
-
-                    //int i = 0;
-
-                    //Log.d("debug","i="+i);
-                    //i++;
-                    SystemClock.sleep(300);
-                //}
-            }
-        }).start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run()
+//            {
+//                isRunning = true;
+//                //while(isRunning)
+//                //{
+//
+//
+//                    //int i = 0;
+//
+//                    //Log.d("debug","i="+i);
+//                    //i++;
+//                    SystemClock.sleep(300);
+//                //}
+//            }
+//        }).start();
         Log.d("debug","onStartCommand()");
 
         //we have some options for service
@@ -63,7 +71,6 @@ public class MeasurmentService extends Service {
             Log.d("debug","MyService onDestroy()");
         }
         isRunning = false;
-
     }
 
     @Override
@@ -102,15 +109,16 @@ public class MeasurmentService extends Service {
             Log.d("debug","recording started");
 
             mEMA = 0.0;
+            mHandler.postDelayed(mPollTask,300);
         }
     }
     public void stopRecorder() {
         if (mRecorder != null) {
-
+            mHandler.removeCallbacks(mPollTask);
             mRecorder.stop();
 
             // Send measurement object to activity via broadcast
-            double toSend[] ={getAmplitude(),getAmplitudeEMA(),0.0};
+            double toSend[] ={getAmplitude(),0.0,0.0};
 
             Intent in = new Intent("custom-event-name");
             in.putExtra("measurement_results",toSend);
@@ -130,8 +138,13 @@ public class MeasurmentService extends Service {
 //        return  20 * Math.log10(getAmplitudeEMA() / ampl);
 //    }
     public double getAmplitude() {
-        if (mRecorder != null)
-            return  (20*Math.log10(mRecorder.getMaxAmplitude() / 2700.0));
+
+        if (mRecorder != null) {
+            double f1 = mRecorder.getMaxAmplitude();
+            if (f1>0)
+                return (20 * Math.log10(f1));
+            return 0;
+        }
         else
             return 0;
 
