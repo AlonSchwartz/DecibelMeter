@@ -1,13 +1,18 @@
 package com.elchananalon.decibelmeter;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
+import java.io.IOException;
 
 
 public class MeasurmentService extends Service {
@@ -21,18 +26,23 @@ public class MeasurmentService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         startRecorder();
+        mRecorder.getMaxAmplitude();
+
         new Thread(new Runnable() {
             @Override
             public void run()
             {
                 isRunning = true;
-                int i = 0;
-                while(isRunning)
-                {
-                    Log.d("debug","i="+i);
-                    i++;
-                    SystemClock.sleep(5000);
-                }
+                //while(isRunning)
+                //{
+
+
+                    //int i = 0;
+
+                    //Log.d("debug","i="+i);
+                    //i++;
+                    SystemClock.sleep(300);
+                //}
             }
         }).start();
         Log.d("debug","onStartCommand()");
@@ -70,18 +80,18 @@ public class MeasurmentService extends Service {
             mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
             mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             mRecorder.setOutputFile("/dev/null");
-            mRecorder.setAudioChannels(1);
-            mRecorder.setAudioSamplingRate(44100);
-            mRecorder.setAudioEncodingBitRate(192000);
             try
             {
                 mRecorder.prepare();
-            }
-            catch (java.io.IOException ioe) {
-                android.util.Log.e("[Monkey]", "IOException: " + android.util.Log.getStackTraceString(ioe));
+            } catch (IllegalStateException e) {
+                // TODO Auto-generated catch block
+                Toast.makeText(getApplicationContext(), "IllegalStateException called", Toast.LENGTH_LONG).show();
 
-            }catch (java.lang.SecurityException e) {
-                android.util.Log.e("[Monkey]", "SecurityException: " + android.util.Log.getStackTraceString(e));
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                Toast.makeText(getApplicationContext(), "prepare() failed", Toast.LENGTH_LONG).show();
+
             }
             try
             {
@@ -90,7 +100,8 @@ public class MeasurmentService extends Service {
                 android.util.Log.e("[Monkey]", "SecurityException: " + android.util.Log.getStackTraceString(e));
             }
             Log.d("debug","recording started");
-              //mEMA = 0.0;
+
+            mEMA = 0.0;
         }
     }
     public void stopRecorder() {
@@ -98,29 +109,29 @@ public class MeasurmentService extends Service {
 
             mRecorder.stop();
 
-            // meas = new Measurment(mRecorder);
             // Send measurement object to activity via broadcast
-            double toSend[] ={getAmplitude(),getAmplitudeEMA(),soundDb(getAmplitude())};
-            Intent intent = new Intent("custom-event-name");
-            intent.putExtra("measurement_results",toSend);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+            double toSend[] ={getAmplitude(),getAmplitudeEMA(),0.0};
+
+            Intent in = new Intent("custom-event-name");
+            in.putExtra("measurement_results",toSend);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(in);
 
 
             mRecorder.reset();
-            mRecorder.release();// if removed no segmentation fault but crashes after second play
+            mRecorder.release();
             mRecorder = null;
             Log.d("debug","recording stopped");
         }
     }
-    public double soundDb(double ampl){
-        if(ampl == 0){
-            return 0;
-        }
-        return  20 * Math.log10(getAmplitudeEMA() / ampl);
-    }
+//    public double soundDb(double ampl){
+//        if(ampl == 0){
+//            return 0;
+//        }
+//        return  20 * Math.log10(getAmplitudeEMA() / ampl);
+//    }
     public double getAmplitude() {
         if (mRecorder != null)
-            return  (mRecorder.getMaxAmplitude());
+            return  (20*Math.log10(mRecorder.getMaxAmplitude() / 2700.0));
         else
             return 0;
 

@@ -1,10 +1,13 @@
 package com.elchananalon.decibelmeter;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -35,6 +38,8 @@ public class DecibelMeasurment extends AppCompatActivity implements View.OnClick
         buttonStart.setOnClickListener(this);
         buttonStop.setOnClickListener(this);
 
+
+
     }
     public void onClick(View view)
     {
@@ -43,10 +48,20 @@ public class DecibelMeasurment extends AppCompatActivity implements View.OnClick
         // with actions named "custom-event-name".
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("custom-event-name"));
+
+
         if (view == buttonStart)
         {
             //starting service
-            startService(new Intent(this, MeasurmentService.class));
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
+                        0);
+
+            }
+
+                startService(new Intent(this, MeasurmentService.class));
+
         }
 
         if (view == buttonStop)
@@ -66,7 +81,7 @@ public class DecibelMeasurment extends AppCompatActivity implements View.OnClick
             double resu[] = intent.getDoubleArrayExtra("measurement_results");
             Log.d("receiver", "Got message: " +resu[0]+"  "+resu[1]+"  "+resu[2]);
             //results.setText(""+meas.getAmplitude());
-            results.setText("Amplitude = "+resu[0]+" , AmplitudeEMA= "+resu[1]+", DB = " + resu[2]);
+            results.setText("DB = "+resu[0]+" , AmplitudeEMA= "+resu[1]);
         }
     };
     @Override
