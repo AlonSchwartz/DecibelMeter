@@ -41,7 +41,7 @@
             android:id="@+id/btn_measure"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="run a measurment" />
+            android:text="run a measurement" />
 
         <Button
             android:id="@+id/btn_lastMeasures"

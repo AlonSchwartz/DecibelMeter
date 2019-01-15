@@ -18,16 +18,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".DecibelMeasurment" />
-        <activity android:name=".LastMeasurments" />
+        <activity android:name=".DecibelMeasurement" />
+        <activity android:name=".LastMeasurements" />
         <activity android:name=".LoudestMeasurements"></activity>
         <service
-            android:name=".MeasurmentService"
+            android:name=".MeasurementService"
             android:enabled="true"
             android:exported="true"
             >
             <intent-filter>
-                <action android:name="com.elchananalon.decibelmeter.MeasurmentService"/>
+                <action android:name="com.elchananalon.decibelmeter.MeasurementService"/>
             </intent-filter></service>
     </application>
 
