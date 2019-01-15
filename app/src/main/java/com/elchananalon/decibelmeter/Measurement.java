@@ -10,10 +10,10 @@ public class Measurement {
     private double db;
     private double latitude;
     private double longitude;
-    private Date curr_time;
+    private double curr_time;
 
 
-    public Measurement(double db,double lat, double lon, Date curr_t){
+    public Measurement(double db,double lat, double lon, double curr_t){
         this.curr_time = curr_t;
         this.latitude = lat;
         this.longitude = lon;
@@ -43,11 +43,11 @@ public class Measurement {
         this.longitude = longitude;
     }
 
-    public Date getCurr_time() {
+    public double getCurr_time() {
         return curr_time;
     }
 
-    public void setCurr_time(Date curr_time) {
+    public void setCurr_time(double curr_time) {
         this.curr_time = curr_time;
     }
 }
