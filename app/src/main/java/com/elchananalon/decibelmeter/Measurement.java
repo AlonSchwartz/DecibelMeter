@@ -10,13 +10,16 @@ public class Measurement {
     private double db;
     private double latitude;
     private double longitude;
-    private double curr_time;
+    private String curr_time;
+    private String place;
 
 
-    public Measurement(double db,double lat, double lon, double curr_t){
+
+    public Measurement(double db, String place, String curr_t){
         this.curr_time = curr_t;
-        this.latitude = lat;
-        this.longitude = lon;
+      //  this.latitude = lat;
+      //  this.longitude = lon;
+        this.place = place;
         this.db = db;
     }
     //*****getters and setter******************//
@@ -43,11 +46,13 @@ public class Measurement {
         this.longitude = longitude;
     }
 
-    public double getCurr_time() {
+    public String getCurr_time() {
         return curr_time;
     }
 
-    public void setCurr_time(double curr_time) {
+    public void setCurr_time(String curr_time) {
         this.curr_time = curr_time;
     }
+
+    public String getPlace() { return place; }
 }

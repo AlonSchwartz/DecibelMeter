@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
         // Init Database
         measurementsDB = openOrCreateDatabase("Measurements", MODE_PRIVATE, null);
-        String sql = "CREATE TABLE IF NOT EXISTS contacts (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARCHAR);";
+        String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE);";
         measurementsDB.execSQL(sql);
 
     }

@@ -6,10 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.LocationManager;
-import android.media.MediaPlayer;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +17,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import java.sql.Timestamp;
 
 
 public class DecibelMeasurement extends AppCompatActivity implements View.OnClickListener{
@@ -25,6 +25,16 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     private Button buttonStart;
     private Button buttonStop;
     private TextView results;
+    private Locator loc;
+    private Measurement measurement;
+    private String place;
+
+    private SQLiteDatabase measurementsDB = null;
+    private String [] permissions = {Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION};
+
+
+    private boolean permissionToRecordAccepted = false;
+    private boolean permissionToTrackAccepted = false;
 
 
     @Override
@@ -39,16 +49,32 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         //attaching on click listeners to buttons
         buttonStart.setOnClickListener(this);
         buttonStop.setOnClickListener(this);
-        // Ask for permissions to use microphone if first run
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
-                    0);
+        // Ask for permissions to use microphone & gps if does not have permissions
+        ActivityCompat.requestPermissions(this, permissions, 0);
 
-        }
 
+
+        // Init Database
+        measurementsDB = openOrCreateDatabase("Measurements", MODE_PRIVATE, null);
+        String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE);";
+        measurementsDB.execSQL(sql);
 
     }
+    // Check if the user has granted permission. If not - go back to main page.
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case 0:
+                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                permissionToTrackAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+                break;
+        }
+        if (!(permissionToRecordAccepted && permissionToTrackAccepted)) {
+            finish();
+        }
+    }
+
     public void onClick(View view)
     {
         // Register to receive messages.
@@ -56,13 +82,15 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         // with actions named "custom-event-name".
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("custom-event-name"));
-
+        loc  = new Locator(this);
 
         if (view == buttonStart)
         {
-            //starting service
+            //starting service and getting location & time
 
+            place = loc.trackLocation();
 
+            Log.d("Debug", "=================================================>>>>>>>>>"+place);
             startService(new Intent(this, MeasurementService.class));
         }
 
@@ -82,7 +110,11 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
             double resu[] = intent.getDoubleArrayExtra("measurement_results");
             Log.d("receiver", "Got message: " +resu[0]+"  "+resu[1]+"  "+resu[2]);
             //results.setText(""+meas.getAmplitude());
-            results.setText("Results = "+resu[0]+"db");
+            String time = new Timestamp(System.currentTimeMillis()).toString();
+            measurement = new Measurement(resu[0],place,time);
+            String update = "INSERT INTO measurements (location, timeTaken, result) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() +  "');";
+            measurementsDB.execSQL(update);
+            results.setText("Results = "+measurement.getDb()+" db, Time: "+ measurement.getCurr_time() + " Place: \n" + measurement.getPlace());
         }
     };
     @Override

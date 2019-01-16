@@ -44,6 +44,7 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
         TextView result = view.findViewById(R.id.txt_result);
         TextView location = view.findViewById(R.id.txt_location);
         TextView timeTaken = view.findViewById(R.id.txt_location);
+        TextView date = view.findViewById(R.id.txt_date);
 
         //getting the contact of the specified position
         Measurement measurment = measurments.get(position);
@@ -51,9 +52,11 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
 
         //adding values to the list
         //mapTicker.setImageDrawable(context.getResources().getDrawable());
-        result.setText(Double.toString(measurment.getDb()));
-        location.setText("Jerusalem");
-        timeTaken.setText("20:00");
+        result.setText(Double.toString(measurment.getDb()) + " dB");
+        //location.setText(measurment.getPlace()); // will be changed to Address
+        location.setText("Jerusalem"); // temp...
+        //timeTaken.setText(measurment.getCurr_time());
+        date.setText(measurment.getCurr_time());
         //will be done after measurement class is done
 
 
