@@ -98,12 +98,10 @@ public class MeasurementService extends Service {
             {
                 mRecorder.prepare();
             } catch (IllegalStateException e) {
-                // TODO Auto-generated catch block
                 Toast.makeText(getApplicationContext(), "IllegalStateException called", Toast.LENGTH_LONG).show();
 
 
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 Toast.makeText(getApplicationContext(), "prepare() failed", Toast.LENGTH_LONG).show();
 
             }
@@ -139,7 +137,7 @@ public class MeasurementService extends Service {
             Log.d("debug","recording stopped");
         }
     }
-//    public double soundDb(double ampl){
+    //    public double soundDb(double ampl){
 //        if(ampl == 0){
 //            return 0;
 //        }
@@ -148,9 +146,12 @@ public class MeasurementService extends Service {
     public double getAmplitude() {
 
         if (mRecorder != null) {
-            double f1 = mRecorder.getMaxAmplitude();
-            if (f1>0)
-                return (20 * Math.log10(f1/2700));
+            //Cellphone can catch up to 90 db + - ,
+            double f1 = mRecorder.getMaxAmplitude()/51805.5336;
+            if (f1>0) {
+                Log.d("Debug", "=======> " + 20 * Math.log10(f1 / 0.0002) + " maxAMp: " + f1);
+                return (20 * Math.log10(f1 / 0.0002));
+            }
             return 0;
         }
         else

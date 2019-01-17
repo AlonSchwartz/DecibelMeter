@@ -31,15 +31,16 @@ public class Locator implements LocationListener {
         String place = "Location not found";
         if (!isTrackLocation)
         {
+            //TODO Check for permission and remove try&catch
 
             try {
-                 place = getPlace(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
-              //   double longitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
-               //  double latitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
+                place = getPlace(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+                //   double longitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
+                //  double latitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
                 // start track GPS location as soon as possible or location changed
-                long minTime = 0;       // minimum time interval between location updates, in milliseconds
-                float minDistance = 0;  // minimum distance between location updates, in meters
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, this);
+                //long minTime = 0;       // minimum time interval between location updates, in milliseconds
+               // float minDistance = 0;  // minimum distance between location updates, in meters
+              //  locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, this);
                 isTrackLocation = true;
             } catch (SecurityException e) {
                 Log.d("Debug", "ERROR");
@@ -47,7 +48,7 @@ public class Locator implements LocationListener {
 
 
         }
-        locationManager.removeUpdates(this);
+        //locationManager.removeUpdates(this);
 
         return place;
     }
@@ -56,7 +57,7 @@ public class Locator implements LocationListener {
         String place="Not Found";
         System.out.println(location);
         if (location != null) {
-             place = "Latitude: " + Double.toString(location.getLatitude()) + " | Longtitude: " + Double.toString(location.getLongitude()) + " | Time: " + new Timestamp(location.getTime());
+            place = "Latitude: " + Double.toString(location.getLatitude()) + " | Longtitude: " + Double.toString(location.getLongitude()) + " | Time: " + new Timestamp(location.getTime());
         }
 
 
@@ -66,9 +67,6 @@ public class Locator implements LocationListener {
     @Override
     public void onLocationChanged(Location location)
     {
-
-
-
     }
     @Override
     public void onStatusChanged(String s, int i, Bundle bundle)
@@ -87,8 +85,6 @@ public class Locator implements LocationListener {
     public void stopTracking(){
         locationManager.removeUpdates(this);
         isTrackLocation = false;
-
-
     }
 
 

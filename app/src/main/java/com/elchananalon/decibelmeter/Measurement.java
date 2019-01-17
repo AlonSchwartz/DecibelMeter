@@ -17,8 +17,8 @@ public class Measurement {
 
     public Measurement(double db, String place, String curr_t){
         this.curr_time = curr_t;
-      //  this.latitude = lat;
-      //  this.longitude = lon;
+        //  this.latitude = lat;
+        //  this.longitude = lon;
         this.place = place;
         this.db = db;
     }

@@ -75,7 +75,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         }
     }
 
-    public void onClick(View view)
+    public void onClick(View v)
     {
         // Register to receive messages.
         // We are registering an observer (mMessageReceiver) to receive Intents
@@ -84,22 +84,35 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                 new IntentFilter("custom-event-name"));
         loc  = new Locator(this);
 
-        if (view == buttonStart)
+        switch(v.getId()){
+
+            case R.id.buttonStart:
+                place = loc.trackLocation();
+                startService(new Intent(this, MeasurementService.class));
+                break;
+
+            case R.id.buttonStop:
+                stopService(new Intent(this, MeasurementService.class));
+                break;
+        }
+
+
+        /*
+        if (v == buttonStart)
         {
             //starting service and getting location & time
 
             place = loc.trackLocation();
-
-            Log.d("Debug", "=================================================>>>>>>>>>"+place);
             startService(new Intent(this, MeasurementService.class));
         }
 
-        if (view == buttonStop)
+        if (v == buttonStop)
         {
             //stopping service - call onDestroy
             stopService(new Intent(this, MeasurementService.class));
 
         }
+        */
     }
     // Our handler for received Intents. This will be called whenever an Intent
 // with an action named "custom-event-name" is broadcasted.
