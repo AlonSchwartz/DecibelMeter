@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,11 +55,19 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
         //mapTicker.setImageDrawable(context.getResources().getDrawable());
         result.setText(Double.toString(measurment.getDb()) + " dB");
         //location.setText(measurment.getPlace()); // will be changed to Address
-        location.setText("Jerusalem"); // temp...
+        location.setText(measurment.getPlace());
         //timeTaken.setText(measurment.getCurr_time());
         date.setText(measurment.getCurr_time());
-        //will be done after measurement class is done
 
+
+        mapTicker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Log.d("Debug", "Ticker onClick");
+
+            }
+        });
 
         return view;
     }

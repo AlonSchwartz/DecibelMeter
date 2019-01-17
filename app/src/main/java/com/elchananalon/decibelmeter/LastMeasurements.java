@@ -18,24 +18,23 @@ public class LastMeasurements extends AppCompatActivity {
     private SQLiteDatabase measurementsDB = null;
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_last_measurements);
 
-        measurementsView = findViewById(R.id.dlist_measurements);
+        // init view + list
+        measurementsView = findViewById(R.id.dlist_measurements); //set the custom list view
         measurmentsList = new ArrayList<>();
 
-        //measurmentsList.add(new Measurement(52, 542,563,5426));
+        // open DB and then load last measurements
         measurementsDB = openOrCreateDatabase("Measurements", MODE_PRIVATE, null);
         String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE);";
         measurementsDB.execSQL(sql);
 
         loadLastMeasurements();
 
-
+        // Create adapter and set it to display
         myAdapter = new MeasurementsAdapter(this, R.layout.measurements_list_view, measurmentsList);
 
         measurementsView.setAdapter(myAdapter);
@@ -52,6 +51,7 @@ public class LastMeasurements extends AppCompatActivity {
         });
     }
 
+    // To load the last measurements from DB
     private void loadLastMeasurements(){
         String sql =  "SELECT * FROM measurements";
         Cursor cursor = measurementsDB.rawQuery(sql, null);
@@ -60,25 +60,35 @@ public class LastMeasurements extends AppCompatActivity {
         int timeTakenColumn = cursor.getColumnIndex("timeTaken");
         int resultColumn = cursor.getColumnIndex("result");
 
-        //String contactName = cursor.getString(e);
         System.out.println("=============================== "+ cursor.getCount());
         cursor.moveToFirst();
-        if(cursor != null && (cursor.getCount() > 0)){
-            // As long we have data - get it and add it to the contacts list
-            do{
-                String location = cursor.getString(locationColumn);
-                String time = cursor.getString(timeTakenColumn);
-                String result = cursor.getString(resultColumn);
 
-                // index is 0 to show latest measurements first
-                measurmentsList.add(0,new Measurement(Double.valueOf(result), location,time));
+        // try-finally to MAKE SURE that even if some error occurred while reading cursor - the cursor will be closed. it will prevent memory leak.
+        // We want cursor the be closed as soon as we finish our work with it.
+        try {
+            if (cursor != null && (cursor.getCount() > 0)) {
+                // As long we have data - get it and add it to the measurements list
+                do {
+                    String location = cursor.getString(locationColumn);
+                    String time = cursor.getString(timeTakenColumn);
+                    String result = cursor.getString(resultColumn);
 
-                System.out.println("d");
+                    // index is 0 to show latest measurements first
+                    measurmentsList.add(0, new Measurement(Double.valueOf(result), location, time));
 
-            }while(cursor.moveToNext());
+                    System.out.println("d");
+
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            cursor.close();
         }
 
+    }
 
-
+    protected void onDestroy()
+    {
+        measurementsDB.close();
+        super.onDestroy();
     }
 }

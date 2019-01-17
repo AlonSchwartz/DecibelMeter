@@ -1,14 +1,10 @@
 package com.elchananalon.decibelmeter;
 
-import android.Manifest;
 import android.app.Service;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.SystemClock;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -22,11 +18,12 @@ public class MeasurementService extends Service {
     static final private double EMA_FILTER = 0.6;
     private boolean isRunning = true;
     private Handler mHandler = new Handler();
+    private double db = 0;
 
     private Runnable mPollTask = new Runnable() {
         @Override
         public void run() {
-            getAmplitude();
+            db = getAmplitude();
             mHandler.postDelayed(mPollTask,300);
         }
     };
@@ -78,6 +75,7 @@ public class MeasurementService extends Service {
             Log.d("debug","MyService onDestroy()");
         }
         isRunning = false;
+
     }
 
     @Override
@@ -124,7 +122,8 @@ public class MeasurementService extends Service {
             mRecorder.stop();
 
             // Send measurement object to activity via broadcast
-            double toSend[] ={Math.round(getAmplitude()),0.0,0.0};
+            double toSend[] ={Math.round(db)};
+
 
             Intent in = new Intent("custom-event-name");
             in.putExtra("measurement_results",toSend);

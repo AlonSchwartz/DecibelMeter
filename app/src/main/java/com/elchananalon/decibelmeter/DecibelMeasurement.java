@@ -18,21 +18,23 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 public class DecibelMeasurement extends AppCompatActivity implements View.OnClickListener{
 
     private Button buttonStart;
-    private Button buttonStop;
     private TextView results;
-    private Locator loc;
+    //private Locator loc;
     private Measurement measurement;
     private String place;
 
     private SQLiteDatabase measurementsDB = null;
     private String [] permissions = {Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION};
 
-
+    boolean isMeasuring = false;
     private boolean permissionToRecordAccepted = false;
     private boolean permissionToTrackAccepted = false;
 
@@ -43,12 +45,10 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
         setContentView(R.layout.activity_decibel_measurement);
         //getting buttons from xml
-        buttonStart = (Button) findViewById(R.id.buttonStart);
-        buttonStop = (Button) findViewById(R.id.buttonStop);
-        results = (TextView) findViewById(R.id.results);
+        buttonStart = findViewById(R.id.buttonStart);
+        results = findViewById(R.id.txt_results);
         //attaching on click listeners to buttons
         buttonStart.setOnClickListener(this);
-        buttonStop.setOnClickListener(this);
 
         // Ask for permissions to use microphone & gps if does not have permissions
         ActivityCompat.requestPermissions(this, permissions, 0);
@@ -60,6 +60,8 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE);";
         measurementsDB.execSQL(sql);
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("custom-event-name"));
     }
     // Check if the user has granted permission. If not - go back to main page.
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -82,17 +84,28 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         // with actions named "custom-event-name".
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("custom-event-name"));
-        loc  = new Locator(this);
+        Locator loc  = new Locator(this);
+
 
         switch(v.getId()){
 
             case R.id.buttonStart:
-                place = loc.trackLocation();
                 startService(new Intent(this, MeasurementService.class));
-                break;
 
-            case R.id.buttonStop:
-                stopService(new Intent(this, MeasurementService.class));
+                if (!isMeasuring) {
+                    buttonStart.setText("Stop");
+
+                } else {
+                    buttonStart.setText("Start");
+                    stopService(new Intent(this, MeasurementService.class));
+                    place = loc.trackLocation();
+
+
+                }
+                isMeasuring = !isMeasuring;
+
+
+
                 break;
         }
 
@@ -113,6 +126,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
         }
         */
+
     }
     // Our handler for received Intents. This will be called whenever an Intent
 // with an action named "custom-event-name" is broadcasted.
@@ -121,15 +135,28 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
             double resu[] = intent.getDoubleArrayExtra("measurement_results");
-            Log.d("receiver", "Got message: " +resu[0]+"  "+resu[1]+"  "+resu[2]);
+            Log.d("receiver", "Got message: " +resu[0]);
             //results.setText(""+meas.getAmplitude());
-            String time = new Timestamp(System.currentTimeMillis()).toString();
-            measurement = new Measurement(resu[0],place,time);
+
+            DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy, HH:mm:ss");
+            Date d = new Date(System.currentTimeMillis());
+            String time = dateFormat.format(d);
+
+            //String time = new Timestamp(System.currentTimeMillis()).toString();
+
+            //String time = String.format("%1$tr", System.currentTimeMillis());
+
+            String e = (place.replaceAll("-", " ").replaceAll("'", "")); //Delete - and ' from strings, they are doing errors when uploading to SQLite
+            Log.d("Change:", ""+ e);
+            measurement = new Measurement(resu[0],e,time);
             String update = "INSERT INTO measurements (location, timeTaken, result) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() +  "');";
             measurementsDB.execSQL(update);
-            results.setText("Results = "+measurement.getDb()+" db, Time: "+ measurement.getCurr_time() + " Place: \n" + measurement.getPlace());
+            results.setText("Results: "+measurement.getDb()+" db\nTime: \n"+ measurement.getCurr_time() + " \nPlace: \n" + measurement.getPlace());
+
         }
+
     };
+
     @Override
     protected void onDestroy() {
         // Unregister since the activity is about to be closed.

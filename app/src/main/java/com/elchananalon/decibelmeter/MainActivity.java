@@ -10,7 +10,7 @@ import android.widget.Button;
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener{
 
     private Button btn_startMeasurement, btn_lastMeasurements, btn_loudestMeasurements;
-    private SQLiteDatabase measurementsDB = null;
+    //private SQLiteDatabase measurementsDB = null;
 
 
 
@@ -29,11 +29,12 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         btn_lastMeasurements.setOnClickListener(this);
         btn_loudestMeasurements.setOnClickListener(this);
 
+        /*
         // Init Database
         measurementsDB = openOrCreateDatabase("Measurements", MODE_PRIVATE, null);
         String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE);";
         measurementsDB.execSQL(sql);
-
+*/
     }
 
 

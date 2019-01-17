@@ -34,8 +34,8 @@
         <ImageView
             android:id="@+id/img_logo"
             android:layout_width="match_parent"
-            android:layout_height="247dp"
-            tools:srcCompat="@tools:sample/avatars[0]" />
+            android:layout_height="294dp"
+            android:background="@drawable/swave" />
 
         <Button
             android:id="@+id/btn_measure"
@@ -55,11 +55,6 @@
             android:layout_height="wrap_content"
             android:text="Loudest Measurements" />
 
-        <Button
-            android:id="@+id/button4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Button" />
     </LinearLayout>
 
     <TextView

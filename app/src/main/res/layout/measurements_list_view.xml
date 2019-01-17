@@ -37,17 +37,17 @@
                         android:text="Result"
                         android:textSize="26sp" />
 
-                    <TextView
-                        android:id="@+id/txt_location"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Location"
-                        android:textSize="16sp" />
-
                 </LinearLayout>
 
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/txt_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Location"
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/txt_date"
