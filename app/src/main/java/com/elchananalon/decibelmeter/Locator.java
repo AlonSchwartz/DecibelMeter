@@ -33,14 +33,14 @@ public class Locator implements LocationListener {
     }
 
 
-    public String trackLocation()
+    public String[] trackLocation()
     {
         double longitude;
         double latitude;
         String address = "";
 
         String place = "Location not found";
-        //TODO Check for permission and remove try&catch
+
         if ( ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED )
         {
             long minTime = 0;       // minimum time interval between location updates, in milliseconds
@@ -93,8 +93,8 @@ public class Locator implements LocationListener {
         }
         Log.d("Locator",address);
         locationManager.removeUpdates(this);
-
-        return address;
+        String[] results = {address, place};
+        return results;
     }
 
     // To get longitude and latitude

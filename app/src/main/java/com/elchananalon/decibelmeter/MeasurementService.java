@@ -24,7 +24,10 @@ public class MeasurementService extends Service {
         @Override
         public void run() {
             db = getAmplitude();
+
             mHandler.postDelayed(mPollTask,300);
+            Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
+
         }
     };
     private Runnable mSleepTask = new Runnable() {

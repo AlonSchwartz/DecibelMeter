@@ -30,6 +30,8 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     //private Locator loc;
     private Measurement measurement;
     private String place;
+    private String[] locResults;
+    private String waypoints;
 
     private SQLiteDatabase measurementsDB = null;
     private String [] permissions = {Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION};
@@ -50,14 +52,18 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         //attaching on click listeners to buttons
         buttonStart.setOnClickListener(this);
 
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+            // only for API greater than 23, because requesting for permissions is mandatory since then.
+
+
         // Ask for permissions to use microphone & gps if does not have permissions
         ActivityCompat.requestPermissions(this, permissions, 0);
 
-
+        }
 
         // Init Database
         measurementsDB = openOrCreateDatabase("Measurements", MODE_PRIVATE, null);
-        String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE);";
+        String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE, waypoints VARCHAR);";
         measurementsDB.execSQL(sql);
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
@@ -85,6 +91,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("custom-event-name"));
         Locator loc  = new Locator(this);
+        Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
 
 
         switch(v.getId()){
@@ -98,7 +105,9 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                 } else {
                     buttonStart.setText("Start");
                     stopService(new Intent(this, MeasurementService.class));
-                    place = loc.trackLocation();
+                    locResults = loc.trackLocation();
+                    place = locResults[0];
+                    waypoints = locResults[1];
 
 
                 }
@@ -109,23 +118,6 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                 break;
         }
 
-
-        /*
-        if (v == buttonStart)
-        {
-            //starting service and getting location & time
-
-            place = loc.trackLocation();
-            startService(new Intent(this, MeasurementService.class));
-        }
-
-        if (v == buttonStop)
-        {
-            //stopping service - call onDestroy
-            stopService(new Intent(this, MeasurementService.class));
-
-        }
-        */
 
     }
     // Our handler for received Intents. This will be called whenever an Intent
@@ -148,8 +140,8 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
             String e = (place.replaceAll("-", " ").replaceAll("'", "")); //Delete - and ' from strings, they are doing errors when uploading to SQLite
             Log.d("Change:", ""+ e);
-            measurement = new Measurement(resu[0],e,time);
-            String update = "INSERT INTO measurements (location, timeTaken, result) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() +  "');";
+            measurement = new Measurement(resu[0],e,waypoints, time);
+            String update = "INSERT INTO measurements (location, timeTaken, result, waypoints) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() +  "', '" + measurement.getWaypoints()+"');";
             measurementsDB.execSQL(update);
             results.setText("Results: "+measurement.getDb()+" db\nTime: \n"+ measurement.getCurr_time() + " \nPlace: \n" + measurement.getPlace());
 

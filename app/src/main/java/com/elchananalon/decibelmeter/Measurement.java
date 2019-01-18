@@ -12,11 +12,13 @@ public class Measurement {
     private double longitude;
     private String curr_time;
     private String place;
+    private String waypoints;
 
 
 
-    public Measurement(double db, String place, String curr_t){
+    public Measurement(double db, String place, String waypoints, String curr_t){
         this.curr_time = curr_t;
+        this.waypoints = waypoints;
         //  this.latitude = lat;
         //  this.longitude = lon;
         this.place = place;
@@ -55,4 +57,7 @@ public class Measurement {
     }
 
     public String getPlace() { return place; }
+
+    public String getWaypoints() { return waypoints; }
+
 }

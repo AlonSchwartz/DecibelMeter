@@ -22,6 +22,7 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
     private Context context;
     private int resource;
 
+
     public MeasurementsAdapter(Context context, int resource, ArrayList<Measurement> measurments) {
         super(context, resource, measurments);
         this.measurments = measurments;
@@ -44,7 +45,7 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
         ImageView mapTicker = view.findViewById(R.id.img_mapTicker);
         TextView result = view.findViewById(R.id.txt_result);
         TextView location = view.findViewById(R.id.txt_location);
-        TextView timeTaken = view.findViewById(R.id.txt_location);
+        //TextView timeTaken = view.findViewById(R.id.txt_location);
         TextView date = view.findViewById(R.id.txt_date);
 
         //getting the contact of the specified position
@@ -65,7 +66,12 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
             public void onClick(View v) {
 
                 Log.d("Debug", "Ticker onClick");
+                String uri = "geo:0,0?q="+measurments.get(position).getWaypoints()+"("+measurments.get(position).getPlace()+")";
+                Uri gmmIntentUri = Uri.parse(uri);
+                Intent intent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                intent.setPackage("com.google.android.apps.maps");
 
+                context.startActivity(intent);
             }
         });
 

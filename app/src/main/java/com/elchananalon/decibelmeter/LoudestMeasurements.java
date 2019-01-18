@@ -29,7 +29,7 @@ public class LoudestMeasurements extends AppCompatActivity {
 
         // open DB and then load last measurements
         measurementsDB = openOrCreateDatabase("Measurements", MODE_PRIVATE, null);
-        String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE);";
+        String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE,waypoints VARCHAR);";
         measurementsDB.execSQL(sql);
 
         loadLastMeasurements();
@@ -60,6 +60,7 @@ public class LoudestMeasurements extends AppCompatActivity {
         int locationColumn = cursor.getColumnIndex("location");
         int timeTakenColumn = cursor.getColumnIndex("timeTaken");
         int resultColumn = cursor.getColumnIndex("result");
+        int wayPointsColumn = cursor.getColumnIndex("waypoints");
 
         System.out.println("=============================== "+ cursor.getCount());
         cursor.moveToFirst();
@@ -73,9 +74,10 @@ public class LoudestMeasurements extends AppCompatActivity {
                     String location = cursor.getString(locationColumn);
                     String time = cursor.getString(timeTakenColumn);
                     String result = cursor.getString(resultColumn);
+                    String waypoints = cursor.getString(wayPointsColumn);
 
                     // index is 0 to show latest measurements first
-                    measurmentsList.add( new Measurement(Double.valueOf(result), location, time));
+                    measurmentsList.add( new Measurement(Double.valueOf(result), location, waypoints, time));
 
                     System.out.println("d");
 
