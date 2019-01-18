@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -13,7 +14,6 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,15 +38,30 @@ public class Locator implements LocationListener {
         double longitude;
         double latitude;
         String address = "";
-
         String place = "Location not found";
+
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setAltitudeRequired(false);
+        criteria.setBearingRequired(false);
+        criteria.setCostAllowed(true);
+        criteria.setPowerRequirement(Criteria.POWER_HIGH);
+
+        String best = locationManager.getBestProvider(criteria,false);
+        Log.d("LOCATOR;", "======================= "+best);
 
         if ( ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED )
         {
             long minTime = 0;       // minimum time interval between location updates, in milliseconds
-            float minDistance = 0;  // minimum distance between location updates, in meters
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, this);
-            place = getPlace(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+            float minDistance = 50;  // minimum distance between location updates, in meters
+            if (best != null) {
+                locationManager.requestLocationUpdates(best, minTime, minDistance, this);
+                place = getPlace(locationManager.getLastKnownLocation(best));
+            }
+            else{
+                //locationManager.requestLocationUpdates(locationManager.PRO, minTime, minDistance, this);
+                place = getPlace(locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER));
+            }
             // locationManager.requestSingleUpdate(locationManager.GPS_PROVIDER, this, );
 
         }
@@ -71,8 +86,8 @@ public class Locator implements LocationListener {
 
         Geocoder geocoder = new Geocoder(mContext, Locale.getDefault());
         try {
-            longitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
-            latitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
+            longitude = locationManager.getLastKnownLocation(best).getLongitude();
+            latitude = locationManager.getLastKnownLocation(best).getLatitude();
             addresses = geocoder.getFromLocation(latitude, longitude , 1);
         }catch(IOException ioException )
         {
@@ -125,5 +140,7 @@ public class Locator implements LocationListener {
     public void onProviderDisabled(String s)
     {
     }
+
+
 
 }

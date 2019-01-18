@@ -34,7 +34,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     private String waypoints;
 
     private SQLiteDatabase measurementsDB = null;
-    private String [] permissions = {Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION};
+    private String [] permissions = {Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
 
     boolean isMeasuring = false;
     private boolean permissionToRecordAccepted = false;
