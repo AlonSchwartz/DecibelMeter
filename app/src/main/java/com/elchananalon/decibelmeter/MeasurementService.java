@@ -20,46 +20,31 @@ public class MeasurementService extends Service {
     private Handler mHandler = new Handler();
     private double db = 0;
 
-    private Runnable mPollTask = new Runnable() {
-        @Override
-        public void run() {
-            db = getAmplitude();
-
-            mHandler.postDelayed(mPollTask,300);
-            Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
-
-        }
-    };
+//    private Runnable mPollTask = new Runnable() {
+//        @Override
+//        public void run() {
+//            db = getAmplitude();
+//
+//            //mHandler.postDelayed(mPollTask,300);
+//            Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
+//
+//        }
+//    };
     private Runnable mSleepTask = new Runnable() {
         public void run() {
-            //Log.i("Noise", "runnable mSleepTask");
+            Log.i("Noise", "runnable mSleepTask");
             startRecorder();
+            db = getAmplitude();
             //Noise monitoring start
             // Runnable(mPollTask) will execute after POLL_INTERVAL
-            mHandler.postDelayed(mPollTask, 300);
+//            mHandler.postDelayed(mSleepTask, 300);
         }
     };
+    private Thread mThread;
     public int onStartCommand(Intent intent, int flags, int startId)
     {
-        startRecorder();
-
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run()
-//            {
-//                isRunning = true;
-//                //while(isRunning)
-//                //{
-//
-//
-//                    //int i = 0;
-//
-//                    //Log.d("debug","i="+i);
-//                    //i++;
-//                    SystemClock.sleep(300);
-//                //}
-//            }
-//        }).start();
+        mThread = new Thread(mSleepTask);
+        mThread.start();
         Log.d("debug","onStartCommand()");
 
         //we have some options for service
@@ -115,36 +100,35 @@ public class MeasurementService extends Service {
             Log.d("debug","recording started");
 
             mEMA = 0.0;
-            mHandler.postDelayed(mPollTask,300);
+//            mHandler.postDelayed(mSleepTask, 300);
         }
     }
     public void stopRecorder() {
         if (mRecorder != null) {
-            mHandler.removeCallbacks(mPollTask);
-            mHandler.removeCallbacks(mSleepTask);
+//            mHandler.removeCallbacks(mPollTask);
+            if(mThread.isAlive())
+                Log.d("debug","Thread is alive");
+            mHandler.removeCallbacks(mSleepTask); // Remove pending posts
+            mThread.interrupt(); // Kill thread
+
             mRecorder.stop();
 
+            if(!mThread.isAlive())
+                Log.d("debug","Thread is DEAD");
+            Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
+            Log.d("Thread","=====================Thread ID is: "+mThread.getId());
             // Send measurement object to activity via broadcast
-            double toSend[] ={Math.round(db)};
-
-
+            double toSend =Math.round(db);
             Intent in = new Intent("custom-event-name");
             in.putExtra("measurement_results",toSend);
             LocalBroadcastManager.getInstance(this).sendBroadcast(in);
 
-
             mRecorder.reset();
             mRecorder.release();
             mRecorder = null;
-            Log.d("debug","recording stopped");
+
         }
     }
-    //    public double soundDb(double ampl){
-//        if(ampl == 0){
-//            return 0;
-//        }
-//        return  20 * Math.log10(getAmplitudeEMA() / ampl);
-//    }
     public double getAmplitude() {
 
         if (mRecorder != null) {
