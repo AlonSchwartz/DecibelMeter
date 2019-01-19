@@ -29,6 +29,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
     private Button buttonStart;
     private TextView results;
+    private TextView resultsLive;
     //private Locator loc;
     private Measurement measurement;
     private String place;
@@ -42,6 +43,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     private boolean permissionToRecordAccepted = false;
     private boolean permissionToTrackAccepted = false;
     private boolean firstStart=false;
+    private boolean streamLive = false;
 
 
     @Override
@@ -52,6 +54,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         //getting buttons from xml
         buttonStart = findViewById(R.id.buttonStart);
         results = findViewById(R.id.txt_results);
+        resultsLive = findViewById(R.id.txt_live);
         //attaching on click listeners to buttons
         buttonStart.setOnClickListener(this);
 
@@ -118,14 +121,15 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                 if (!isMeasuring) {
                     // Register to receive messages.
                     // We are registering an observer (mMessageReceiver) to receive Intents
-                    // with actions named "custom-event-name".
                     // Get measure details from service
                     if(firstStart) {
                         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("custom-event-name"));
                         firstStart =false;
                     }
+
                     Log.d("Not measuring", "Stopped");
                     buttonStart.setText("Stop");
+                    LocalBroadcastManager.getInstance(this).registerReceiver(mLiveMessageReceiver, new IntentFilter("live-event-name"));
 
                 } else {
                     buttonStart.setText("Start");
@@ -133,7 +137,6 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                     locResults = loc.trackLocation();
                     place = locResults[0];
                     waypoints = locResults[1];
-
 
                 }
                 isMeasuring = !isMeasuring;
@@ -145,6 +148,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
 
     }
+    private double maxDb = 0.0;
     // Our handler for received Intents. This will be called whenever an Intent
 // with an action named "custom-event-name" is broadcasted.
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -163,11 +167,25 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
             //String time = String.format("%1$tr", System.currentTimeMillis());
 
             String e = (place.replaceAll("-", " ").replaceAll("'", "")); //Delete - and ' from strings, they are doing errors when uploading to SQLite
-            Log.d("Change:", ""+ e);
-            measurement = new Measurement(resu,e,waypoints, time);
-            String update = "INSERT INTO measurements (location, timeTaken, result, waypoints) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() +  "', '" + measurement.getWaypoints()+"');";
+            Log.d("Change:", "" + e);
+            measurement = new Measurement(resu, e, waypoints, time);
+            String update = "INSERT INTO measurements (location, timeTaken, result, waypoints) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() + "', '" + measurement.getWaypoints() + "');";
             measurementsDB.execSQL(update);
-            results.setText("Results: "+measurement.getDb()+" db\nTime: \n"+ measurement.getCurr_time() + " \nPlace: \n" + measurement.getPlace());
+            results.setText("Results: " + measurement.getDb() + " db\nTime: \n" + measurement.getCurr_time() + " \nPlace: \n" + measurement.getPlace());
+            maxDb = 0.0;
+
+        }
+
+    };
+    // Our handler for received Intents. This will be called whenever an Intent
+// with an action named "live-event-name" is broadcasted.
+    private BroadcastReceiver mLiveMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Get extra data included in the Intent
+            double res = intent.getDoubleExtra("live_results",0.0);
+            Log.d("receiver", "Got message: " +res);
+            resultsLive.setText("Live results:  "+res);
 
         }
 
@@ -177,6 +195,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     protected void onDestroy() {
         // Unregister since the activity is about to be closed.
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLiveMessageReceiver);
         super.onDestroy();
     }
 }

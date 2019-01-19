@@ -24,6 +24,12 @@
             android:textSize="50sp"
             tools:layout_editor_absoluteX="122dp"
             tools:layout_editor_absoluteY="74dp" />
+        <TextView
+            android:id="@+id/txt_live"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#a11d09"
+            android:textSize="25sp" />
 
         <TextView
             android:id="@+id/txt_results"
