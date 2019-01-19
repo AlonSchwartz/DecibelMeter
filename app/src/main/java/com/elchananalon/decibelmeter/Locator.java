@@ -37,22 +37,24 @@ public class Locator implements LocationListener {
     }
 
 
+    // To start tracking location
     public void trackLocation() {
         double longitude;
         double latitude;
         String address = "";
         String place = "Location not found";
 
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        criteria.setAltitudeRequired(false);
-        criteria.setBearingRequired(false);
-        criteria.setCostAllowed(true);
-        criteria.setPowerRequirement(Criteria.POWER_HIGH);
+       // Criteria criteria = new Criteria();
+       // criteria.setAccuracy(Criteria.ACCURACY_FINE);
+       // criteria.setAltitudeRequired(false);
+       // criteria.setBearingRequired(false);
+       // criteria.setCostAllowed(true);
+       // criteria.setPowerRequirement(Criteria.POWER_HIGH);
 
         // String best = locationManager.getBestProvider(criteria,false);
         //Log.d("LOCATOR;", "======================= "+best);
 
+        // Check if user granted permissions to use GPS
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             long minTime = 0;       // minimum time interval between location updates, in milliseconds
             float minDistance = 50;  // minimum distance between location updates, in meters
@@ -67,6 +69,7 @@ public class Locator implements LocationListener {
         }
 
        address = getAddress(place);
+
         // saving address + waypoints at the results array
         if (!address.equals("Location not found")){
             results[0] = address;
@@ -78,8 +81,6 @@ public class Locator implements LocationListener {
             results[1] = "0,0";
 
         }
-        Log.d("LOCATOR", "NETWORK LOCATION IS::::::::::: "+locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
-        Log.d("LOCATOR", "PASSIVE LOCATION IS::::::::::: "+locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER));
 
     }
 
@@ -109,6 +110,7 @@ public class Locator implements LocationListener {
         return results;
     }
 
+    // gets waypoints and convert to an address
     private String getAddress(String waypoints){
 
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -118,14 +120,22 @@ public class Locator implements LocationListener {
             Geocoder geocoder = new Geocoder(mContext, Locale.getDefault());
             if (!waypoints.equals("Location not found")) {
                 try {
-                    //longitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
-                    // latitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
-                    longitude = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER).getLongitude();
-                    latitude = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER).getLatitude();
+                    longitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
+                    latitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
                     addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                } catch (IOException ioException) {
-                    Log.e("Locator", "GPS Service not available");
+                } catch (Exception exception) {
 
+
+                    try{
+                        longitude = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER).getLongitude();
+                        latitude = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER).getLatitude();
+                        addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                    }catch (Exception exce2)
+                    {
+                        Log.d("Locator", "Location not available");
+
+                    }
+                    Log.d("Locator", "Location not available");
                 }
 
 
@@ -143,7 +153,7 @@ public class Locator implements LocationListener {
     }
 
 
-    @Override
+    // If location changed, change the results as well
     public void onLocationChanged(Location location)
     {
         String newPlace = getPlace(location);
