@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Decibel Meter</string>
+    <string name="db_res">Results:</string>
+    <string name="db_live">Live result:</string>
+    <string name="db_time">Time:</string>
+    <string name="db_place">Place:</string>
 </resources>

@@ -30,7 +30,9 @@ import java.util.Date;
 public class DecibelMeasurement extends AppCompatActivity implements View.OnClickListener{
 
     private Button buttonStart;
-    private TextView results;
+    private TextView resultsDb;
+    private TextView resultsTime;
+    private TextView resultsPlace;
     private Locator loc;
     private TextView resultsLive;
     private ProgressBar pb;
@@ -57,8 +59,10 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         setContentView(R.layout.activity_decibel_measurement);
         //getting buttons from xml
         buttonStart = findViewById(R.id.buttonStart);
-        results = findViewById(R.id.txt_results);
-        resultsLive = findViewById(R.id.txt_live);
+        resultsDb = findViewById(R.id.txt_db_res);
+        resultsLive = findViewById(R.id.txt_live_res);
+        resultsPlace = findViewById(R.id.txt_loc_res);
+        resultsTime = findViewById(R.id.txt_time_res);
         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
 
         //attaching on click listeners to buttons
@@ -104,7 +108,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
     public void onClick(View v)
     {
-        
+
         //Locator loc  = new Locator(this);
         Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
 
@@ -172,7 +176,10 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
             measurement = new Measurement(res, e, waypoints, time);
             String update = "INSERT INTO measurements (location, timeTaken, result, waypoints) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() + "', '" + measurement.getWaypoints() + "');";
             measurementsDB.execSQL(update);
-            results.setText("Results: " + measurement.getDb() + " db\nTime: \n" + measurement.getCurr_time() + " \nPlace: \n" + measurement.getPlace());
+            //results.setText("Results: " + measurement.getDb() + " db\nTime: \n" + measurement.getCurr_time() + " \nPlace: \n" + measurement.getPlace());
+            resultsDb.setText(String.valueOf(measurement.getDb()));
+            resultsTime.setText(String.valueOf(measurement.getCurr_time()));
+            resultsPlace.setText(String.valueOf(measurement.getPlace()));
             maxDb = 0.0;
             findViewById(R.id.loadingPanel).setVisibility(View.GONE);
 
@@ -188,7 +195,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
             // Get Live results included in the Intent
             double res = intent.getDoubleExtra("live_results",0.0);
             Log.d("receiver", "Got message: " +res);
-            resultsLive.setText("Live results:  "+res);
+            resultsLive.setText(String.valueOf(res));
 
         }
 
