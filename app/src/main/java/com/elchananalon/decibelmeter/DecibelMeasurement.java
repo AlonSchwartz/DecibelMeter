@@ -46,7 +46,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     boolean isMeasuring = false;
     private boolean permissionToRecordAccepted = false;
     private boolean permissionToTrackAccepted = false;
-    private boolean firstStart=true;
+    private boolean firstStart = true;
 
 
 
@@ -104,11 +104,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
     public void onClick(View v)
     {
-        // Register to receive messages.
-        // We are registering an observer (mMessageReceiver) to receive Intents
-        // with actions named "custom-event-name".
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter("custom-event-name"));
+        
         //Locator loc  = new Locator(this);
         Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
 
