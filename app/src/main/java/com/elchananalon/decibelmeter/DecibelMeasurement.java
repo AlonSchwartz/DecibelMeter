@@ -1,6 +1,7 @@
 package com.elchananalon.decibelmeter;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,6 +19,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -30,6 +32,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     private Button buttonStart;
     private TextView results;
     private TextView resultsLive;
+    private ProgressBar pb;
     //private Locator loc;
     private Measurement measurement;
     private String place;
@@ -42,8 +45,8 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     boolean isMeasuring = false;
     private boolean permissionToRecordAccepted = false;
     private boolean permissionToTrackAccepted = false;
-    private boolean firstStart=false;
-    private boolean streamLive = false;
+    private boolean firstStart=true;
+
 
 
     @Override
@@ -55,6 +58,8 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         buttonStart = findViewById(R.id.buttonStart);
         results = findViewById(R.id.txt_results);
         resultsLive = findViewById(R.id.txt_live);
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+
         //attaching on click listeners to buttons
         buttonStart.setOnClickListener(this);
 
@@ -72,7 +77,6 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE, waypoints VARCHAR);";
         measurementsDB.execSQL(sql);
 
-        firstStart =true;
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
@@ -119,17 +123,22 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                 startService(new Intent(this, MeasurementService.class));
 
                 if (!isMeasuring) {
-                    // Register to receive messages.
-                    // We are registering an observer (mMessageReceiver) to receive Intents
+                    /**
+                    * Register to receive messages.
+                    * We are registering an observer (mMessageReceiver) to receive Intents
+                    */
                     // Get measure details from service
                     if(firstStart) {
                         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("custom-event-name"));
                         firstStart =false;
                     }
-
+                    // Get live measurements
+                    LocalBroadcastManager.getInstance(this).registerReceiver(mLiveMessageReceiver, new IntentFilter("live-event-name"));
                     Log.d("Not measuring", "Stopped");
                     buttonStart.setText("Stop");
-                    LocalBroadcastManager.getInstance(this).registerReceiver(mLiveMessageReceiver, new IntentFilter("live-event-name"));
+
+                    findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
+
 
                 } else {
                     buttonStart.setText("Start");
@@ -150,13 +159,13 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     }
     private double maxDb = 0.0;
     // Our handler for received Intents. This will be called whenever an Intent
-// with an action named "custom-event-name" is broadcasted.
+// with an action named "custom-event-name" is broadcasts.
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
-            double resu = intent.getDoubleExtra("measurement_results",0.0);
-            Log.d("receiver", "Got message: " +resu);
+            double res = intent.getDoubleExtra("measurement_results",0.0);
+            Log.d("receiver", "Got message: " +res);
 
             DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy, HH:mm:ss");
             Date d = new Date(System.currentTimeMillis());
@@ -168,21 +177,23 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
             String e = (place.replaceAll("-", " ").replaceAll("'", "")); //Delete - and ' from strings, they are doing errors when uploading to SQLite
             Log.d("Change:", "" + e);
-            measurement = new Measurement(resu, e, waypoints, time);
+            measurement = new Measurement(res, e, waypoints, time);
             String update = "INSERT INTO measurements (location, timeTaken, result, waypoints) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() + "', '" + measurement.getWaypoints() + "');";
             measurementsDB.execSQL(update);
             results.setText("Results: " + measurement.getDb() + " db\nTime: \n" + measurement.getCurr_time() + " \nPlace: \n" + measurement.getPlace());
             maxDb = 0.0;
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+
 
         }
 
     };
     // Our handler for received Intents. This will be called whenever an Intent
-// with an action named "live-event-name" is broadcasted.
+// with an action named "live-event-name" broadcasts.
     private BroadcastReceiver mLiveMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // Get extra data included in the Intent
+            // Get Live results included in the Intent
             double res = intent.getDoubleExtra("live_results",0.0);
             Log.d("receiver", "Got message: " +res);
             resultsLive.setText("Live results:  "+res);
@@ -196,6 +207,32 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         // Unregister since the activity is about to be closed.
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mLiveMessageReceiver);
+        // In case the service is still running - back was pressed while recording
+        if(isMyServiceRunning(MeasurementService.class)){
+            stopService(new Intent(this, MeasurementService.class));
+        }
         super.onDestroy();
+    }
+
+    @Override
+    protected void onPause() {
+        // In case the service is still running - home was pressed while recording
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLiveMessageReceiver);
+        if(isMyServiceRunning(MeasurementService.class)){
+            stopService(new Intent(this, MeasurementService.class));
+        }
+        super.onPause();
+    }
+
+    /**  Check if service is running*/
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

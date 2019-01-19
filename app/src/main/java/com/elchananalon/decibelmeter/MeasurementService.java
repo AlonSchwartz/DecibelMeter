@@ -16,9 +16,8 @@ public class MeasurementService extends Service {
     private MediaRecorder mRecorder;
     private static double mEMA = 0.0;
     static final private double EMA_FILTER = 0.6;
-    private boolean isRunning = true;
+
     private Handler mHandler = new Handler();
-    private double db = 0;
     private double liveDb = 0;
     private double maxDb = 0.0;
 
@@ -27,29 +26,26 @@ public class MeasurementService extends Service {
         public void run() {
             liveDb = getAmplitude();
             // Send measurement object to activity via broadcast
-            //double toSend =Math.round(liveDb);
             double toSend =Math.round(liveDb);
-            if(toSend!=0.0){
+            if(toSend!=0.0){ // Make sure thread stops sending measurement if no input sound detected
+                // Find maximum result for final result
                 if(maxDb <= toSend){
                     maxDb =toSend;
                 }
+                // Send intent via broadcast
                 Intent in = new Intent("live-event-name");
                 in.putExtra("live_results",toSend);
                 LocalBroadcastManager.getInstance(MeasurementService.this).sendBroadcast(in);
-
-                Log.d("Sender","message sent============>");
             }
 
             mHandler.postDelayed(mPollTask,300);
-            //Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
 
         }
     };
     private Runnable mSleepTask = new Runnable() {
         public void run() {
             Log.i("Noise", "runnable mSleepTask");
-            startRecorder();
-            db = getAmplitude();
+            startRecorder(); // Init media recorder
             //Noise monitoring start
             // Runnable(mPollTask) will execute after POLL_INTERVAL
             mHandler.postDelayed(mPollTask, 300);
@@ -58,7 +54,9 @@ public class MeasurementService extends Service {
     private Thread mThread;
     public int onStartCommand(Intent intent, int flags, int startId)
     {
+        // Attach tasks to do in thread
         mThread = new Thread(mSleepTask);
+        // Start running thread
         mThread.start();
         Log.d("debug","onStartCommand()");
 
@@ -73,11 +71,10 @@ public class MeasurementService extends Service {
     {
         super.onDestroy();
         if(mRecorder != null){
-            //stopping the recorder when service is destroyed
+            // Stopping the recorder when service is destroyed
             stopRecorder();
             Log.d("debug","MyService onDestroy()");
         }
-        isRunning = false;
 
     }
 
@@ -106,12 +103,7 @@ public class MeasurementService extends Service {
                 Toast.makeText(getApplicationContext(), "prepare() failed", Toast.LENGTH_LONG).show();
 
             }
-            try
-            {
-                mRecorder.start();
-            }catch (java.lang.SecurityException e) {
-                android.util.Log.e("[Monkey]", "SecurityException: " + android.util.Log.getStackTraceString(e));
-            }
+            mRecorder.start();
             Log.d("debug","recording started");
 
             mEMA = 0.0;
@@ -119,25 +111,27 @@ public class MeasurementService extends Service {
     }
     public void stopRecorder() {
         if (mRecorder != null) {
-
+            ///////////////////////////////////////////////
             if(mThread.isAlive())
                 Log.d("debug","Thread is alive");
-            mHandler.removeCallbacks(mPollTask);
+            ////////////////////////////////////////////////
+            mHandler.removeCallbacks(mPollTask); // Remove pending posts
             mHandler.removeCallbacks(mSleepTask); // Remove pending posts
             mThread.interrupt(); // Kill thread
-
+            // Stop media recorder
             mRecorder.stop();
-
+            ////////////////////////////////////////////////////////////
             if(!mThread.isAlive())
                 Log.d("debug","Thread is DEAD");
             Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
             Log.d("Thread","=====================Thread ID is: "+mThread.getId());
+            ///////////////////////////////////////////////////////////
             // Send measurement object to activity via broadcast
             double toSend =Math.round(maxDb);
             Intent in = new Intent("custom-event-name");
             in.putExtra("measurement_results",toSend);
             LocalBroadcastManager.getInstance(this).sendBroadcast(in);
-
+            // Free allocated memory for recorder
             mRecorder.reset();
             mRecorder.release();
             mRecorder = null;

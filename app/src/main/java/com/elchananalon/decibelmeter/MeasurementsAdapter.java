@@ -2,6 +2,8 @@ package com.elchananalon.decibelmeter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
@@ -13,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -64,18 +67,34 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
         mapTicker.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(isGoogleMapsInstalled()) {
+                    Log.d("Debug", "Ticker onClick");
+                    String uri = "geo:0,0?q=" + measurments.get(position).getWaypoints() + "(" + measurments.get(position).getPlace() + ")";
+                    Uri gmmIntentUri = Uri.parse(uri);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                    intent.setPackage("com.google.android.apps.maps");
 
-                Log.d("Debug", "Ticker onClick");
-                String uri = "geo:0,0?q="+measurments.get(position).getWaypoints()+"("+measurments.get(position).getPlace()+")";
-                Uri gmmIntentUri = Uri.parse(uri);
-                Intent intent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                intent.setPackage("com.google.android.apps.maps");
-
-                context.startActivity(intent);
+                    context.startActivity(intent);
+                }
+                else{
+                    Log.d("Debug", "no gmaps found");
+                }
             }
         });
 
         return view;
+    }
+    public boolean isGoogleMapsInstalled()
+    {
+        try
+        {
+            ApplicationInfo info = context.getPackageManager().getApplicationInfo("com.google.android.apps.maps", 0 );
+            return true;
+        }
+        catch(PackageManager.NameNotFoundException e)
+        {
+            return false;
+        }
     }
 
 
