@@ -24,6 +24,7 @@
             android:textSize="50sp"
             tools:layout_editor_absoluteX="122dp"
             tools:layout_editor_absoluteY="74dp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -116,10 +117,6 @@
             android:layout_height="match_parent"
             android:gravity="center" >
 
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:indeterminate="true" />
         </RelativeLayout>
 
     </LinearLayout>

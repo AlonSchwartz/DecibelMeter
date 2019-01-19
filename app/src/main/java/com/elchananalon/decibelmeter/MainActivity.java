@@ -1,7 +1,6 @@
 package com.elchananalon.decibelmeter;
 
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -10,9 +9,6 @@ import android.widget.Button;
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener{
 
     private Button btn_startMeasurement, btn_lastMeasurements, btn_loudestMeasurements;
-    //private SQLiteDatabase measurementsDB = null;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,12 +25,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         btn_lastMeasurements.setOnClickListener(this);
         btn_loudestMeasurements.setOnClickListener(this);
 
-        /*
-        // Init Database
-        measurementsDB = openOrCreateDatabase("Measurements", MODE_PRIVATE, null);
-        String sql = "CREATE TABLE IF NOT EXISTS measurements (id integer primary key, location VARCHAR, timeTaken VARCHAR, result VARDOUBLE);";
-        measurementsDB.execSQL(sql);
-*/
     }
 
 

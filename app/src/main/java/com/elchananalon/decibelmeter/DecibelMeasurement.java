@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
-import android.location.LocationManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -19,9 +18,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,8 +32,6 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     private TextView resultsPlace;
     private Locator loc;
     private TextView resultsLive;
-    private ProgressBar pb;
-    //private Locator loc;
     private Measurement measurement;
     private String place;
     private String[] locResults;
@@ -63,7 +58,6 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         resultsLive = findViewById(R.id.txt_live_res);
         resultsPlace = findViewById(R.id.txt_loc_res);
         resultsTime = findViewById(R.id.txt_time_res);
-        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
 
         //attaching on click listeners to buttons
         buttonStart.setOnClickListener(this);
@@ -109,22 +103,17 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
     public void onClick(View v)
     {
 
-        //Locator loc  = new Locator(this);
-        Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
-
-
         switch(v.getId()){
 
             case R.id.buttonStart:
-                Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
 
                 startService(new Intent(this, MeasurementService.class));
 
                 if (!isMeasuring) {
                     /**
-                    * Register to receive messages.
-                    * We are registering an observer (mMessageReceiver) to receive Intents
-                    */
+                     * Register to receive messages.
+                     * We are registering an observer (mMessageReceiver) to receive Intents
+                     */
                     // Get measure details from service
                     if(firstStart) {
                         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("custom-event-name"));
@@ -132,11 +121,9 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                     }
                     // Get live measurements
                     LocalBroadcastManager.getInstance(this).registerReceiver(mLiveMessageReceiver, new IntentFilter("live-event-name"));
-                    Log.d("Not measuring", "Stopped");
+
                     buttonStart.setText("Stop");
                     loc.trackLocation();
-                    findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
-
 
                 } else {
                     buttonStart.setText("Start");
@@ -151,9 +138,8 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                 break;
         }
 
-
     }
-    private double maxDb = 0.0;
+    double maxDb = 0.0;
     // Our handler for received Intents. This will be called whenever an Intent
 // with an action named "custom-event-name" is broadcasts.
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -161,40 +147,33 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
             double res = intent.getDoubleExtra("measurement_results",0.0);
-            Log.d("receiver", "Got message: " +res);
 
             DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy, HH:mm:ss");
             Date d = new Date(System.currentTimeMillis());
             String time = dateFormat.format(d);
 
-            //String time = new Timestamp(System.currentTimeMillis()).toString();
-
-            //String time = String.format("%1$tr", System.currentTimeMillis());
-
             String e = (place.replaceAll("-", " ").replaceAll("'", "")); //Delete - and ' from strings, they are doing errors when uploading to SQLite
-            Log.d("Change:", "" + e);
+
             measurement = new Measurement(res, e, waypoints, time);
             String update = "INSERT INTO measurements (location, timeTaken, result, waypoints) VALUES ('" + measurement.getPlace() + "', '" + measurement.getCurr_time() + "', '" + measurement.getDb() + "', '" + measurement.getWaypoints() + "');";
             measurementsDB.execSQL(update);
-            //results.setText("Results: " + measurement.getDb() + " db\nTime: \n" + measurement.getCurr_time() + " \nPlace: \n" + measurement.getPlace());
+
             resultsDb.setText(String.valueOf(measurement.getDb()));
             resultsTime.setText(String.valueOf(measurement.getCurr_time()));
             resultsPlace.setText(String.valueOf(measurement.getPlace()));
             maxDb = 0.0;
-            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
 
 
         }
 
     };
     // Our handler for received Intents. This will be called whenever an Intent
-// with an action named "live-event-name" broadcasts.
+    // with an action named "live-event-name" broadcasts.
     private BroadcastReceiver mLiveMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             // Get Live results included in the Intent
             double res = intent.getDoubleExtra("live_results",0.0);
-            Log.d("receiver", "Got message: " +res);
             resultsLive.setText(String.valueOf(res));
 
         }

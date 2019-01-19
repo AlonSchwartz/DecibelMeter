@@ -4,8 +4,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -38,22 +36,13 @@ public class LoudestMeasurements extends AppCompatActivity {
         myAdapter = new MeasurementsAdapter(this, R.layout.measurements_list_view, measurmentsList);
 
         measurementsView.setAdapter(myAdapter);
-        measurementsView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int index, long id)
-            {
-                System.out.println("====Tests====");
 
 
-
-            }
-        });
     }
 
     // To load the last measurements from DB
     private void loadLastMeasurements(){
-        //String sql =  "SELECT * FROM measurements ORDER BY result LIMIT 5";
+
         String sql = "SELECT * FROM measurements ORDER BY result DESC LIMIT 5";
         Cursor cursor = measurementsDB.rawQuery(sql, null);
 
@@ -62,7 +51,6 @@ public class LoudestMeasurements extends AppCompatActivity {
         int resultColumn = cursor.getColumnIndex("result");
         int wayPointsColumn = cursor.getColumnIndex("waypoints");
 
-        System.out.println("=============================== "+ cursor.getCount());
         cursor.moveToFirst();
 
         // try-finally to MAKE SURE that even if some error occurred while reading cursor - the cursor will be closed. it will prevent memory leak.
@@ -78,8 +66,6 @@ public class LoudestMeasurements extends AppCompatActivity {
 
                     // index is 0 to show latest measurements first
                     measurmentsList.add( new Measurement(Double.valueOf(result), location, waypoints, time));
-
-                    System.out.println("d");
 
                 } while (cursor.moveToNext());
             }

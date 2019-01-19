@@ -6,7 +6,6 @@ import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -14,9 +13,6 @@ import java.io.IOException;
 
 public class MeasurementService extends Service {
     private MediaRecorder mRecorder;
-    private static double mEMA = 0.0;
-    static final private double EMA_FILTER = 0.6;
-
     private Handler mHandler = new Handler();
     private double liveDb = 0;
     private double maxDb = 0.0;
@@ -44,7 +40,7 @@ public class MeasurementService extends Service {
     };
     private Runnable mSleepTask = new Runnable() {
         public void run() {
-            Log.i("Noise", "runnable mSleepTask");
+
             startRecorder(); // Init media recorder
             //Noise monitoring start
             // Runnable(mPollTask) will execute after POLL_INTERVAL
@@ -58,7 +54,6 @@ public class MeasurementService extends Service {
         mThread = new Thread(mSleepTask);
         // Start running thread
         mThread.start();
-        Log.d("debug","onStartCommand()");
 
         //we have some options for service
         //start sticky means service will be explicitly started and stopped
@@ -73,7 +68,7 @@ public class MeasurementService extends Service {
         if(mRecorder != null){
             // Stopping the recorder when service is destroyed
             stopRecorder();
-            Log.d("debug","MyService onDestroy()");
+
         }
 
     }
@@ -104,28 +99,18 @@ public class MeasurementService extends Service {
 
             }
             mRecorder.start();
-            Log.d("debug","recording started");
 
-            mEMA = 0.0;
         }
     }
     public void stopRecorder() {
         if (mRecorder != null) {
-            ///////////////////////////////////////////////
-            if(mThread.isAlive())
-                Log.d("debug","Thread is alive");
-            ////////////////////////////////////////////////
+
             mHandler.removeCallbacks(mPollTask); // Remove pending posts
             mHandler.removeCallbacks(mSleepTask); // Remove pending posts
             mThread.interrupt(); // Kill thread
             // Stop media recorder
             mRecorder.stop();
-            ////////////////////////////////////////////////////////////
-            if(!mThread.isAlive())
-                Log.d("debug","Thread is DEAD");
-            Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
-            Log.d("Thread","=====================Thread ID is: "+mThread.getId());
-            ///////////////////////////////////////////////////////////
+
             // Send measurement object to activity via broadcast
             double toSend =Math.round(maxDb);
             Intent in = new Intent("custom-event-name");
@@ -141,21 +126,20 @@ public class MeasurementService extends Service {
     public double getAmplitude() {
 
         if (mRecorder != null) {
-            //Cellphone can catch up to 90 db + - ,
-            double f1 = mRecorder.getMaxAmplitude()/51805.5336;
+            // Cellphones can catch up to 90 db + -
+            // getMaxAmplitude returns a value between 0-32767 (in most phones). that means that if the maximum db is 90, the pressure
+            // at the microphone is 0.6325 Pascal.
+            // it does a comparison with the previous value of getMaxAmplitude.
+            // we need to divide maxAmplitude with (32767/0.6325)
+            double f1 = mRecorder.getMaxAmplitude()/51805.5336;//51805.5336 or if 100db so 46676.6381
             if (f1>0) {
-                Log.d("Debug", "=======> " + 20 * Math.log10(f1 / 0.0002) + " maxAMp: " + f1);
-                return (20 * Math.log10(f1 / 0.0002));
+                //Assuming that the minimum reference pressure is 0.000085 Pascal (on most phones) is equal to 0 db
+                return (Math.abs(20 * Math.log10(f1 / 0.000085)));
             }
             return 0;
         }
         else
             return 0;
 
-    }
-    public double getAmplitudeEMA() {
-        double amp =  getAmplitude();
-        mEMA = EMA_FILTER * amp + (1.0 - EMA_FILTER) * mEMA;
-        return mEMA;
     }
 }

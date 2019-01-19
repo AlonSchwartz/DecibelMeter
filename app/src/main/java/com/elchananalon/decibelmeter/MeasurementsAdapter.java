@@ -4,11 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,7 +46,6 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
         ImageView mapTicker = view.findViewById(R.id.img_mapTicker);
         TextView result = view.findViewById(R.id.txt_result);
         TextView location = view.findViewById(R.id.txt_location);
-        //TextView timeTaken = view.findViewById(R.id.txt_location);
         TextView date = view.findViewById(R.id.txt_date);
 
         //getting the contact of the specified position
@@ -56,19 +53,16 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
 
 
         //adding values to the list
-        //mapTicker.setImageDrawable(context.getResources().getDrawable());
         result.setText(Double.toString(measurment.getDb()) + " dB");
-        //location.setText(measurment.getPlace()); // will be changed to Address
         location.setText(measurment.getPlace());
-        //timeTaken.setText(measurment.getCurr_time());
         date.setText(measurment.getCurr_time());
 
 
+        // Open location of google maps - if google maps is installed and enabled
         mapTicker.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(isGoogleMapsInstalled()) {
-                    Log.d("Debug", "Ticker onClick");
+                if(isGoogleMapsInstalledAndEnabled()) {
                     String uri = "geo:0,0?q=" + measurments.get(position).getWaypoints() + "(" + measurments.get(position).getPlace() + ")";
                     Uri gmmIntentUri = Uri.parse(uri);
                     Intent intent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
@@ -77,19 +71,21 @@ public class MeasurementsAdapter extends ArrayAdapter<Measurement> {
                     context.startActivity(intent);
                 }
                 else{
-                    Log.d("Debug", "no gmaps found");
+                    Toast.makeText(context, "Google maps is disabled or not installed", Toast.LENGTH_LONG).show();
                 }
             }
         });
 
         return view;
     }
-    public boolean isGoogleMapsInstalled()
+    public boolean isGoogleMapsInstalledAndEnabled()
     {
         try
         {
             ApplicationInfo info = context.getPackageManager().getApplicationInfo("com.google.android.apps.maps", 0 );
-            return true;
+            if (info.enabled)
+                return true;
+            return false;
         }
         catch(PackageManager.NameNotFoundException e)
         {

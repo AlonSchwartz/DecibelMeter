@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -13,7 +12,6 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
-import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
@@ -22,13 +20,11 @@ public class Locator implements LocationListener {
 
 
     private LocationManager locationManager;
-    private boolean isTrackLocation;
     Context mContext;
     private String[] results = new String[2];
-    double longitude;
-    double latitude;
-    String address = "";
-    String place = "Location not found";
+    private double longitude;
+    private double latitude;
+    private String address = "";
 
     public Locator(Context mContext) {
         this.mContext = mContext;
@@ -39,36 +35,25 @@ public class Locator implements LocationListener {
 
     // To start tracking location
     public void trackLocation() {
-        double longitude;
-        double latitude;
+
         String address = "";
         String place = "Location not found";
-
-       // Criteria criteria = new Criteria();
-       // criteria.setAccuracy(Criteria.ACCURACY_FINE);
-       // criteria.setAltitudeRequired(false);
-       // criteria.setBearingRequired(false);
-       // criteria.setCostAllowed(true);
-       // criteria.setPowerRequirement(Criteria.POWER_HIGH);
-
-        // String best = locationManager.getBestProvider(criteria,false);
-        //Log.d("LOCATOR;", "======================= "+best);
 
         // Check if user granted permissions to use GPS
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             long minTime = 0;       // minimum time interval between location updates, in milliseconds
             float minDistance = 50;  // minimum distance between location updates, in meters
 
+            // Register for location updates
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, this);
             place = getPlace(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
             if (place.equals("Location not found"))
             {
-                System.out.println("GPS Location not found, searching network...");
                 place = getPlace(locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER));
             }
         }
 
-       address = getAddress(place);
+        address = getAddress(place);
 
         // saving address + waypoints at the results array
         if (!address.equals("Location not found")){
@@ -87,7 +72,6 @@ public class Locator implements LocationListener {
     // To get longitude and latitude
     public String getPlace(Location location){
         String place="Location not found";
-        System.out.println(location);
         if (location != null) {
             place = Double.toString(location.getLatitude()) + ", " + Double.toString(location.getLongitude());
         }
@@ -153,12 +137,12 @@ public class Locator implements LocationListener {
     }
 
 
-    // If location changed, change the results as well
+    // If location changed, change the results as well.
     public void onLocationChanged(Location location)
     {
         String newPlace = getPlace(location);
         String newAddress = getAddress(newPlace);
-        Log.d("Current place", ""+newAddress);
+
         if (!newAddress.equals("Location not found")){
             results[0] = newAddress;
             results[1] = newPlace;
