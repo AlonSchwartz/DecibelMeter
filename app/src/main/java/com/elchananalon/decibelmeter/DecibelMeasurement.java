@@ -31,6 +31,7 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
     private Button buttonStart;
     private TextView results;
+    private Locator loc;
     private TextView resultsLive;
     private ProgressBar pb;
     //private Locator loc;
@@ -63,13 +64,18 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         //attaching on click listeners to buttons
         buttonStart.setOnClickListener(this);
 
-        if (android.os.Build.VERSION.SDK_INT >= 23) {
-            // only for API greater than 23, because requesting for permissions is mandatory since then.
+        loc  = new Locator(this);
 
+        // If gps is disables, ask the user to enable it.
+        if (!loc.isGpsEnabled()) {
+            askToEnableGPS();
+        }
 
-        // Ask for permissions to use microphone & gps if does not have permissions
-        ActivityCompat.requestPermissions(this, permissions, 0);
+        // only for API greater than 23, because requesting for permissions is mandatory since then.
+        else if (android.os.Build.VERSION.SDK_INT >= 23) {
 
+            // Ask for permissions to use microphone & gps if does not have permissions
+            ActivityCompat.requestPermissions(this, permissions, 0);
         }
 
         // Init Database
@@ -78,21 +84,6 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
         measurementsDB.execSQL(sql);
 
 
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-                .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        dialog.cancel();
-                    }
-                });
-        final AlertDialog alert = builder.create();
-        alert.show();
 
 
     }
@@ -106,20 +97,27 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                 break;
         }
         if (!(permissionToRecordAccepted && permissionToTrackAccepted)) {
+            measurementsDB.close();
             finish();
         }
     }
 
     public void onClick(View v)
     {
-
-        Locator loc  = new Locator(this);
+        // Register to receive messages.
+        // We are registering an observer (mMessageReceiver) to receive Intents
+        // with actions named "custom-event-name".
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("custom-event-name"));
+        //Locator loc  = new Locator(this);
         Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
 
 
         switch(v.getId()){
 
             case R.id.buttonStart:
+                Log.d("Thread","=====================My ID is: "+android.os.Process.getThreadPriority(android.os.Process.myTid()));
+
                 startService(new Intent(this, MeasurementService.class));
 
                 if (!isMeasuring) {
@@ -136,22 +134,20 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
                     LocalBroadcastManager.getInstance(this).registerReceiver(mLiveMessageReceiver, new IntentFilter("live-event-name"));
                     Log.d("Not measuring", "Stopped");
                     buttonStart.setText("Stop");
-
+                    loc.trackLocation();
                     findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
 
 
                 } else {
                     buttonStart.setText("Start");
                     stopService(new Intent(this, MeasurementService.class));
-                    locResults = loc.trackLocation();
+                    loc.stopGPS();
+                    locResults = loc.getResults();
                     place = locResults[0];
                     waypoints = locResults[1];
 
                 }
                 isMeasuring = !isMeasuring;
-
-
-
                 break;
         }
 
@@ -202,8 +198,32 @@ public class DecibelMeasurement extends AppCompatActivity implements View.OnClic
 
     };
 
+    private void askToEnableGPS(){
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Your GPS seems to be disabled, Please enable it so the app could work properly")
+                .setCancelable(false)
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, final int id) {
+                        finish();
+                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, final int id) {
+                        dialog.cancel();
+                        finish();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
+
+    }
+
     @Override
     protected void onDestroy() {
+        //close DB
+        measurementsDB.close();
         // Unregister since the activity is about to be closed.
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mLiveMessageReceiver);

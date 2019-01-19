@@ -24,7 +24,11 @@ public class Locator implements LocationListener {
     private LocationManager locationManager;
     private boolean isTrackLocation;
     Context mContext;
-    String[] results = new String[2];
+    private String[] results = new String[2];
+    double longitude;
+    double latitude;
+    String address = "";
+    String place = "Location not found";
 
     public Locator(Context mContext) {
         this.mContext = mContext;
@@ -33,76 +37,41 @@ public class Locator implements LocationListener {
     }
 
 
-    public String[] trackLocation() {
+    // To start tracking location
+    public void trackLocation() {
         double longitude;
         double latitude;
         String address = "";
         String place = "Location not found";
 
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        criteria.setAltitudeRequired(false);
-        criteria.setBearingRequired(false);
-        criteria.setCostAllowed(true);
-        criteria.setPowerRequirement(Criteria.POWER_HIGH);
+       // Criteria criteria = new Criteria();
+       // criteria.setAccuracy(Criteria.ACCURACY_FINE);
+       // criteria.setAltitudeRequired(false);
+       // criteria.setBearingRequired(false);
+       // criteria.setCostAllowed(true);
+       // criteria.setPowerRequirement(Criteria.POWER_HIGH);
 
         // String best = locationManager.getBestProvider(criteria,false);
-        //  Log.d("LOCATOR;", "======================= "+best);
+        //Log.d("LOCATOR;", "======================= "+best);
 
+        // Check if user granted permissions to use GPS
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             long minTime = 0;       // minimum time interval between location updates, in milliseconds
             float minDistance = 50;  // minimum distance between location updates, in meters
-            //if (best != null) {
+
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, this);
             place = getPlace(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
-            //  }
-            // else{
-
-            //  }
-            // locationManager.requestSingleUpdate(locationManager.GPS_PROVIDER, this, );
-
+            if (place.equals("Location not found"))
+            {
+                System.out.println("GPS Location not found, searching network...");
+                place = getPlace(locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER));
+            }
         }
-/*
-            try {
-                place = getPlace(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
-                //   double longitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
-                //  double latitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
-                // start track GPS location as soon as possible or location changed
-                //long minTime = 0;       // minimum time interval between location updates, in milliseconds
-                // float minDistance = 0;  // minimum distance between location updates, in meters
-                //  locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, this);
-                isTrackLocation = true;
-            } catch (SecurityException e) {
-                Log.d("Debug", "ERROR");
-            }
-*/
 
+       address = getAddress(place);
 
-        Log.d("Debug", "PLACE IS ---------------------> " + place);
-        List<Address> addresses = null;
-
-        Geocoder geocoder = new Geocoder(mContext, Locale.getDefault());
-        if (!place.equals("Location not found")){
-            try {
-                longitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
-                latitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
-                addresses = geocoder.getFromLocation(latitude, longitude, 1);
-            } catch (IOException ioException) {
-                Log.e("Locator", "GPS Service not available");
-
-            }
-            Log.d("Locator", "SIZE IS = " + addresses.size());
-
-            if (addresses == null || addresses.size() == 0) {
-
-                Toast.makeText(mContext, "No address found! saving waypoints", Toast.LENGTH_SHORT).show();
-                address = place;
-            } else {
-                address = addresses.get(0).getAddressLine(0);
-
-
-            }
-            Log.d("Locator", address);
+        // saving address + waypoints at the results array
+        if (!address.equals("Location not found")){
             results[0] = address;
             results[1] = place;
         }
@@ -111,11 +80,8 @@ public class Locator implements LocationListener {
             results[0] = place;
             results[1] = "0,0";
 
-
         }
-        Log.d("LOCATOR", "NETWORK LOCATION IS::::::::::: "+locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
-        locationManager.removeUpdates(this);
-        return results;
+
     }
 
     // To get longitude and latitude
@@ -129,9 +95,80 @@ public class Locator implements LocationListener {
         return place;
     }
 
-    @Override
+    public boolean isGpsEnabled(){
+
+        mContext.getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    public void stopGPS(){
+        locationManager.removeUpdates(this);
+
+    }
+
+    public String[] getResults(){
+        return results;
+    }
+
+    // gets waypoints and convert to an address
+    private String getAddress(String waypoints){
+
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+            List<Address> addresses = null;
+
+            Geocoder geocoder = new Geocoder(mContext, Locale.getDefault());
+            if (!waypoints.equals("Location not found")) {
+                try {
+                    longitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
+                    latitude = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
+                    addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                } catch (Exception exception) {
+
+
+                    try{
+                        longitude = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER).getLongitude();
+                        latitude = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER).getLatitude();
+                        addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                    }catch (Exception exce2)
+                    {
+                        Log.d("Locator", "Location not available");
+
+                    }
+                    Log.d("Locator", "Location not available");
+                }
+
+
+                if (addresses == null || addresses.size() == 0) {
+
+                    Toast.makeText(mContext, "No address found! saving waypoints", Toast.LENGTH_SHORT).show();
+                    address = waypoints;
+                } else {
+                    address = addresses.get(0).getAddressLine(0);
+                }
+                return address;
+            }
+        }
+        return waypoints;
+    }
+
+
+    // If location changed, change the results as well
     public void onLocationChanged(Location location)
     {
+        String newPlace = getPlace(location);
+        String newAddress = getAddress(newPlace);
+        Log.d("Current place", ""+newAddress);
+        if (!newAddress.equals("Location not found")){
+            results[0] = newAddress;
+            results[1] = newPlace;
+        }
+
+        else{
+            results[0] = newPlace;
+            results[1] = "0,0";
+        }
+
     }
     @Override
     public void onStatusChanged(String s, int i, Bundle bundle)
